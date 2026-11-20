@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "platform": "generic",
+  "model_version": null,
+  "checked_at": null,
+  "evidence": [],
+  "capabilities": {
+    "text_to_video": {
+      "status": "unknown",
+      "value": null
+    },
+    "image_to_video": {
+      "status": "unknown",
+      "value": null
+    },
+    "durations_seconds": {
+      "status": "unknown",
+      "value": []
+    },
+    "aspect_ratios": {
+      "status": "unknown",
+      "value": []
+    },
+    "max_reference_images": {
+      "status": "unknown",
+      "value": null
+    },
+    "first_last_frame": {
+      "status": "unknown",
+      "value": null
+    },
+    "multi_shot": {
+      "status": "unknown",
+      "value": null
+    },
+    "native_dialogue": {
+      "status": "unknown",
+      "value": null
+    },
+    "native_audio": {
+      "status": "unknown",
+      "value": null
+    },
+    "video_generation_tool": {
+      "status": "unknown",
+      "value": null
+    },
+    "video_editing_tool": {
+      "status": "unknown",
+      "value": null
+    }
+  }
+}

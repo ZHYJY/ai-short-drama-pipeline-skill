@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "shot_id": "S01_SH01",
+  "character_id": "CHAR_001",
+  "reference_asset_id": "REF_001",
+  "target_asset_id": "FRAME_001",
+  "reviewer": "human_or_vision_model",
+  "has_visual_access": false,
+  "review_status": "not_reviewed",
+  "dimensions": [
+    {
+      "dimension": "face_geometry",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    },
+    {
+      "dimension": "eyes_brows",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    },
+    {
+      "dimension": "nose_mouth",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    },
+    {
+      "dimension": "hairline",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    },
+    {
+      "dimension": "body_proportion",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    },
+    {
+      "dimension": "outfit",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    },
+    {
+      "dimension": "distinctive_marks",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    },
+    {
+      "dimension": "cross_shot_state",
+      "score": null,
+      "visible": false,
+      "evidence": "",
+      "severity": "none"
+    }
+  ],
+  "blockers": [],
+  "recommendation": "needs_review"
+}

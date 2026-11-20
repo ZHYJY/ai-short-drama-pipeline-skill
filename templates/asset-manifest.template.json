@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "project_id": "DEMO",
+  "required_views": [
+    "front_face",
+    "full_body_front"
+  ],
+  "assets": [
+    {
+      "asset_id": "REF_001",
+      "character_id": "CHAR_001",
+      "identity_version": "1.0",
+      "outfit_version": "1.0",
+      "view": "front_face",
+      "file_path": "assets/char001_front.png",
+      "source_type": "user_reference",
+      "derived_from": null,
+      "approval": "pending",
+      "sha256": null,
+      "notes": "示例路径，实际使用时替换"
+    }
+  ]
+}

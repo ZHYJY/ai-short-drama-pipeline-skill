@@ -1,0 +1,33 @@
+{
+  "shot_id": "S01_SH01",
+  "segment_id": "S01",
+  "start_seconds": 0,
+  "end_seconds": 5,
+  "scene_id": "SCENE_001",
+  "camera": {
+    "shot_size": "medium",
+    "angle": "eye_level",
+    "axis_side": "A"
+  },
+  "characters": [
+    {
+      "character_id": "CHAR_001",
+      "identity_version": "1.0",
+      "reference_asset_ids": [],
+      "outfit_id": "OUTFIT_001",
+      "outfit_version": "1.0",
+      "screen_region": "left",
+      "entry_state": {
+        "pose": "standing",
+        "held_prop": null
+      },
+      "exit_state": {
+        "pose": "standing",
+        "held_prop": null
+      },
+      "dialogue": [],
+      "change_event_ids": []
+    }
+  ],
+  "validation_status": "not_run"
+}

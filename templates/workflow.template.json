@@ -1,0 +1,79 @@
+{
+  "project_id": "DEMO",
+  "tasks": [
+    {
+      "task_id": "script",
+      "type": "script",
+      "depends_on": [],
+      "status": "completed",
+      "gate": "approved",
+      "output_asset_ids": [
+        "SCRIPT_001"
+      ]
+    },
+    {
+      "task_id": "character",
+      "type": "character_bible",
+      "depends_on": [
+        "script"
+      ],
+      "status": "completed",
+      "gate": "approved",
+      "output_asset_ids": [
+        "CHAR_001"
+      ]
+    },
+    {
+      "task_id": "shot_plan",
+      "type": "shot_plan",
+      "depends_on": [
+        "script",
+        "character"
+      ],
+      "status": "planned",
+      "gate": "pending",
+      "output_asset_ids": []
+    },
+    {
+      "task_id": "first_frame",
+      "type": "first_frame",
+      "depends_on": [
+        "shot_plan",
+        "character"
+      ],
+      "status": "planned",
+      "gate": "pending",
+      "output_asset_ids": []
+    },
+    {
+      "task_id": "video",
+      "type": "video_shot",
+      "depends_on": [
+        "first_frame"
+      ],
+      "status": "planned",
+      "gate": "pending",
+      "output_asset_ids": []
+    },
+    {
+      "task_id": "review",
+      "type": "visual_review",
+      "depends_on": [
+        "video"
+      ],
+      "status": "planned",
+      "gate": "pending",
+      "output_asset_ids": []
+    },
+    {
+      "task_id": "delivery",
+      "type": "final_delivery",
+      "depends_on": [
+        "review"
+      ],
+      "status": "planned",
+      "gate": "pending",
+      "output_asset_ids": []
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "character_id": "CHAR_001",
+  "identity_version": "1.0",
+  "name": "示例角色（待用户命名）",
+  "identity_status": "draft_unverified",
+  "evidence_policy": "reference_visible_or_user_specified_only",
+  "demographics": {
+    "age_appearance": {
+      "value": null,
+      "source": "unknown"
+    },
+    "gender_presentation": {
+      "value": null,
+      "source": "unknown"
+    },
+    "story_role": null
+  },
+  "head": {
+    "head_shape": null,
+    "face_length_width_ratio": null,
+    "forehead": null,
+    "cheekbones": null,
+    "jawline": null,
+    "chin": null,
+    "ears": null,
+    "asymmetry": null
+  },
+  "face": {
+    "eyes": {
+      "shape": null,
+      "spacing": null,
+      "tilt": null,
+      "eyelids": null,
+      "iris_color": null
+    },
+    "eyebrows": {
+      "shape": null,
+      "density": null,
+      "peak": null
+    },
+    "nose": {
+      "bridge": null,
+      "tip": null,
+      "alar_width": null
+    },
+    "mouth": {
+      "width": null,
+      "upper_lip": null,
+      "lower_lip": null,
+      "corners": null
+    },
+    "skin": {
+      "tone": null,
+      "undertone": null,
+      "freckles": null,
+      "moles": null,
+      "scars": null
+    },
+    "facial_hair": null
+  },
+  "hair": {
+    "hairline": null,
+    "parting": null,
+    "length": null,
+    "texture": null,
+    "color": null,
+    "volume": null,
+    "sideburns": null,
+    "back_shape": null
+  },
+  "body": {
+    "relative_height": null,
+    "head_to_body_ratio": null,
+    "shoulder_hip_ratio": null,
+    "build": null,
+    "neck": null,
+    "arms": null,
+    "hands": null,
+    "legs": null,
+    "posture": null,
+    "gait": null
+  },
+  "wardrobe": {
+    "outfit_id": "OUTFIT_001",
+    "version": "1.0",
+    "top": null,
+    "outerwear": null,
+    "bottom": null,
+    "shoes": null,
+    "accessories": [],
+    "palette_hex": [],
+    "material_details": []
+  },
+  "performance": {
+    "voice": {
+      "timbre": null,
+      "pitch": null,
+      "accent": null,
+      "pace": null,
+      "verification": "unknown"
+    },
+    "expression_habits": [],
+    "gesture_habits": [],
+    "movement_style": null
+  },
+  "identity_lock": {
+    "anchor_features": [],
+    "forbidden_drift": [],
+    "canonical_asset_ids": [],
+    "allowed_variations": [
+      "expression",
+      "pose",
+      "camera_angle",
+      "lighting"
+    ]
+  },
+  "reference_assets": [],
+  "approved_change_events": [],
+  "notes": "所有空值均表示未知，必须经用户指定或参考图核实；不要自行补成已确认事实。"
+}

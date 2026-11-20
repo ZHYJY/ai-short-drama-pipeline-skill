@@ -1,0 +1,161 @@
+{
+  "project_id": "DEMO",
+  "target_duration_seconds": 15,
+  "scene": {
+    "scene_id": "SCENE_001",
+    "coordinate_unit": "meters",
+    "origin": [
+      0,
+      0
+    ],
+    "entrances": [
+      {
+        "id": "door",
+        "position": [
+          0,
+          2
+        ]
+      }
+    ],
+    "obstacles": []
+  },
+  "characters": [
+    {
+      "character_id": "CHAR_001",
+      "identity_version": "1.0",
+      "voice_id": "VOICE_001"
+    }
+  ],
+  "segments": [
+    {
+      "segment_id": "S01",
+      "duration_seconds": 15,
+      "dramatic_objective": "展示冲突",
+      "conflict": "角色发现异常",
+      "new_information": "道具发生变化",
+      "emotion_curve": [
+        "calm",
+        "surprised",
+        "decisive"
+      ],
+      "shots": [
+        {
+          "shot_id": "S01_SH01",
+          "start_seconds": 0,
+          "end_seconds": 5,
+          "scene_id": "SCENE_001",
+          "camera": {
+            "position": [
+              0,
+              -3,
+              1.5
+            ],
+            "target": [
+              0,
+              0,
+              1.5
+            ],
+            "axis_side": "A"
+          },
+          "characters": [
+            {
+              "character_id": "CHAR_001",
+              "entry_position": [
+                0,
+                0
+              ],
+              "exit_position": [
+                0,
+                0
+              ],
+              "entry_state": "standing",
+              "exit_state": "standing",
+              "held_prop_id": null
+            }
+          ],
+          "dialogue": [
+            {
+              "line_id": "L01",
+              "speaker_id": "CHAR_001",
+              "start_seconds": 1,
+              "end_seconds": 3,
+              "text": "这是什么？"
+            }
+          ]
+        },
+        {
+          "shot_id": "S01_SH02",
+          "start_seconds": 5,
+          "end_seconds": 10,
+          "scene_id": "SCENE_001",
+          "camera": {
+            "position": [
+              1,
+              -2,
+              1.5
+            ],
+            "target": [
+              0,
+              0,
+              1.5
+            ],
+            "axis_side": "A"
+          },
+          "characters": [
+            {
+              "character_id": "CHAR_001",
+              "entry_position": [
+                0,
+                0
+              ],
+              "exit_position": [
+                1,
+                0
+              ],
+              "entry_state": "standing",
+              "exit_state": "walking",
+              "held_prop_id": null
+            }
+          ],
+          "dialogue": []
+        },
+        {
+          "shot_id": "S01_SH03",
+          "start_seconds": 10,
+          "end_seconds": 15,
+          "scene_id": "SCENE_001",
+          "camera": {
+            "position": [
+              1,
+              -2,
+              1.5
+            ],
+            "target": [
+              1,
+              0,
+              1.5
+            ],
+            "axis_side": "A"
+          },
+          "characters": [
+            {
+              "character_id": "CHAR_001",
+              "entry_position": [
+                1,
+                0
+              ],
+              "exit_position": [
+                1,
+                0
+              ],
+              "entry_state": "walking",
+              "exit_state": "standing",
+              "held_prop_id": null
+            }
+          ],
+          "dialogue": []
+        }
+      ]
+    }
+  ]
+}

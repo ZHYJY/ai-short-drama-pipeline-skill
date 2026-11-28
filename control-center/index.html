@@ -1,0 +1,53 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>短剧生产控制中心</title>
+<style>
+:root{font-family:system-ui,"Microsoft YaHei",sans-serif;color:#e8edf5;background:#10151e}*{box-sizing:border-box}
+body{margin:0}header{padding:30px max(22px,calc((100vw - 1160px)/2));background:linear-gradient(125deg,#233448,#161d2a)}
+h1{margin:0 0 8px;font-size:28px}h2{font-size:19px;margin:30px 0 15px}p,.muted{color:#a8b6c8}
+main{max-width:1160px;margin:auto;padding:22px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.card,.shot,.asset,form{background:#1b2532;border:1px solid #344254;border-radius:14px;padding:16px}
+.num{font-size:27px;font-weight:750}.shot{margin:12px 0}.shot-title{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.asset{display:grid;grid-template-columns:minmax(140px,270px) 1fr;gap:14px;margin:10px 0}
+.asset img,.asset video{width:100%;max-height:210px;object-fit:contain;border-radius:9px;background:#111823}.asset audio{width:100%}
+.meta{overflow-wrap:anywhere;font-size:13px;line-height:1.85}.badge{border-radius:99px;padding:4px 9px;background:#364458;color:#e6eaf3;font-size:12px}
+button{border:0;border-radius:9px;padding:10px 14px;background:#62c2a6;color:#0b2221;font-weight:700;cursor:pointer}
+button.secondary{background:#34475c;color:#f0f3fa}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #77d9c2}
+input,select,textarea{background:#111a27;color:#f4f7ff;border:1px solid #45576d;border-radius:8px;padding:9px;width:100%;font:inherit}
+label{font-size:13px;display:block;margin:9px 0}.actions{display:flex;flex-wrap:wrap;gap:9px}
+.forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}form button{margin-top:8px}
+.notice{padding:13px;background:#332a25;border:1px solid #886a48;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.good{color:#78d9ae}.bad{color:#f4a3a3}small{color:#9eb0c5}code{color:#b8e1d4}
+@media(max-width:620px){.asset{grid-template-columns:1fr}header{padding:25px 20px}}
+</style></head><body><header><h1>🎬 短剧生产控制中心</h1><p id="project"></p></header>
+<main><div id="stats" class="grid"></div><h2>质量门禁</h2><div class="actions"><button onclick="action('check')">运行素材技术检查</button><button onclick="action('preflight')">合成前复核门禁</button><button onclick="action('final')">成片复核门禁</button></div><p class="muted">技术检查不等于视觉审核。未实际审核的视频不会自动通过。</p><div id="gates"></div>
+<h2>视频抽帧与问题追踪</h2><div class="forms"><form id="analyzeForm"><strong>生成视觉复核证据</strong><label>视频素材ID<input name="asset_id" required placeholder="A001"></label><label>抽帧数量<input name="count" type="number" min="3" max="30" value="7"></label><button>抽帧并创建复核清单</button></form><form id="issueForm"><strong>记录发现的问题</strong><label>素材ID<input name="asset_id" required></label><label>问题分类<select name="category"><option>identity</option><option>visual</option><option>continuity</option><option>audio</option><option>subtitle</option><option>narrative</option></select></label><label>严重程度<select name="severity"><option>high</option><option>critical</option><option>medium</option><option>low</option></select></label><label>问题描述<textarea name="description" required rows="3"></textarea></label><button>加入返工队列</button></form></div><div id="reviewQueue"></div><h2>生产任务与审核操作</h2><div class="forms">
+<form id="taskForm"><strong>创建生成 / 返工任务</strong><label>任务ID<input name="id" required placeholder="TASK-001"></label><label>镜头ID<input name="shot_id" placeholder="SH01"></label><label>任务类型<select name="type"><option>generate</option><option>regenerate</option><option>edit</option><option>audio</option></select></label><label>备注<textarea name="notes" rows="2"></textarea></label><button>添加任务</button></form>
+<form id="assetForm"><strong>登记真实素材</strong><label>素材ID<input name="id" required placeholder="A001"></label><label>镜头ID<input name="shot_id" placeholder="SH01（成片留空）"></label><label>素材类型<select name="kind"><option>video</option><option>first_frame</option><option>image</option><option>audio</option><option>final_video</option><option>character_reference</option></select></label><label>项目内文件相对路径<input name="path" placeholder="media/shot01.mp4"></label><label>模型名称<input name="model" placeholder="unknown"></label><label>平台<input name="platform" placeholder="unknown"></label><label>提示词<textarea name="prompt" rows="2"></textarea></label><button>登记素材</button></form>
+<form id="reviewForm"><strong>登记真实复核结果</strong><label>素材ID<input name="target_id" required placeholder="A001"></label><label>审核维度<select name="scope"><option>identity</option><option>visual</option><option>continuity</option><option>audio</option><option>final_visual</option><option>final_audio</option><option>final_continuity</option><option>final_narrative</option></select></label><label>结果<select name="result"><option>unverified</option><option>pass</option><option>fail</option></select></label><label>审核人或真实视觉工具<input name="reviewer" required placeholder="审核人/工具名称"></label><label>审核证据与时间点<textarea name="evidence" required rows="3" placeholder="记录实际观察的帧、时间点、检查依据和结论"></textarea></label><button>保存复核</button></form>
+</div><div id="message" role="status"></div><h2>按剧情顺序排列的素材</h2><div id="shots"></div><h2>成片与未归属镜头的素材</h2><div id="global"></div><h2>任务队列</h2><div id="tasks"></div></main>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let D={};const order={character_reference:0,first_frame:1,image:2,video:3,audio:4,final_video:5};
+async function request(url,body){let r=await fetch('/api/'+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});let j=await r.json();if(!r.ok)throw Error(j.error||'操作失败');return j}
+function media(a){if(!a.path)return '<p class="muted">无真实媒体文件</p>';let u='/media/'+encodeURIComponent(a.id),p=a.path.toLowerCase();
+if(/\.(png|jpg|jpeg|webp|gif)$/.test(p))return `<img loading="lazy" src="${u}" alt="素材">`;
+if(/\.(mp4|webm|mov)$/.test(p))return `<video controls preload="metadata" src="${u}"></video>`;
+if(/\.(mp3|wav|ogg)$/.test(p))return `<audio controls preload="metadata" src="${u}"></audio>`;
+return '<p class="muted">此格式无法内嵌预览</p>'}
+function asset(a){return `<div class="asset"><div>${media(a)}</div><div class="meta"><strong>${esc(a.id)}</strong> <span class="badge">${esc(a.kind)}</span> ${a.selected?'<span class="good">已采用</span>':''}<div>模型：${esc(a.model||"unknown")} · 平台：${esc(a.platform||"unknown")}</div><div>创建时间：${esc(a.created_at||"")}</div><div>尝试次数：${esc(a.attempt||1)}</div><div>来源：${esc(JSON.stringify(a.sources||[]))}</div><div>参数：${esc(JSON.stringify(a.parameters||{}))}</div><div>提示词：${esc(a.prompt||"未记录")}</div><div>备注：${esc(a.notes||"")}</div><button class="secondary" data-select="${esc(a.id)}">选为采用素材</button></div></div>`}
+function draw(){let P=D['project.json'],S=[...D['shots.json']].sort((a,b)=>a.order-b.order||a.start-b.start),A=D['assets.json'],R=D['reviews.json'],T=D['tasks.json'];
+$('project').textContent=`${P.title} · ${P.aspect_ratio||"未指定画幅"} · 目标 ${P.target_duration_seconds??"?"} 秒`;
+let selected=A.filter(a=>a.selected).length;
+$('stats').innerHTML=[['计划镜头',S.length],['素材数量',A.length],['已采用素材',selected],['复核记录',R.length],['待办任务',T.filter(t=>t.status!=='completed').length]].map(x=>`<div class="card"><div class="num">${esc(x[1])}</div><small>${esc(x[0])}</small></div>`).join('');
+$('gates').innerHTML=[['技术检查',D.technical],['合成前门禁',D.preflight],['成片门禁',D.final]].map(([n,g])=>`<p><strong>${n}：</strong><span class="${g?.status==='pass'?'good':'bad'}">${esc(g?.status||'未运行')}</span> ${esc((g?.reasons||g?.errors||[]).slice(0,12).join('；'))}</p>`).join('');
+let sorted=a=>a.sort((x,y)=>(order[x.kind]??9)-(order[y.kind]??9)||(x.attempt||1)-(y.attempt||1)||String(x.created_at).localeCompare(String(y.created_at)));
+$('shots').innerHTML=S.map(s=>`<section class="shot"><div class="shot-title"><strong>${esc(s.id)} · ${esc(s.description||'')}</strong><span class="badge">${esc(s.start)}–${esc(s.end)} 秒</span></div>${sorted(A.filter(a=>a.shot_id===s.id)).map(asset).join('')||'<p>暂无素材</p>'}</section>`).join('');
+$('global').innerHTML=sorted(A.filter(a=>!a.shot_id)).map(asset).join('')||'<p>暂无项目级素材</p>';
+$('reviewQueue').innerHTML='<h2>待视觉复核队列</h2>'+((D['visual-review-queue.json']||[]).map(r=>`<div class="card"><strong>${esc(r.asset_id)}</strong> · ${esc(r.status)} · ${esc(r.frames.length)} 帧<p class="muted">${esc(r.note)}</p><div class="grid">${r.frames.map(f=>`<div><img style="width:100%;border-radius:8px" src="/review-frame/${encodeURIComponent(r.asset_id)}/${encodeURIComponent(r.asset_sha256.slice(0,12))}/${encodeURIComponent(f.path.split('/').pop())}" alt="审核帧"><small>${esc(f.time_seconds)} 秒</small></div>`).join('')}</div></div>`).join('')||'<p>尚未抽帧</p>');
+$('tasks').innerHTML=T.map(t=>`<div class="card"><strong>${esc(t.id)}</strong> · ${esc(t.type)} · ${esc(t.status)}<p>${esc(t.shot_id||'项目级')} · ${esc(t.notes||'')}</p></div>`).join('')||'<p>暂无任务</p>';
+document.querySelectorAll('[data-select]').forEach(b=>b.addEventListener('click',()=>action('select',{id:b.dataset.select})))}
+async function refresh(){let r=await fetch('/api/state');D=await r.json();draw()}
+async function action(name,data={}){try{let res=await request(name,data);$('message').innerHTML='<p class="notice">'+esc(JSON.stringify(res))+'</p>';await refresh()}catch(e){$('message').innerHTML='<p class="notice bad">'+esc(e.message)+'</p>'}}
+for(let [id,route] of [['taskForm','task'],['assetForm','asset'],['reviewForm','review'],['analyzeForm','analyze'],['issueForm','issue']]){
+$(id).addEventListener('submit',async e=>{e.preventDefault();let o=Object.fromEntries(new FormData(e.target));if(!o.shot_id)delete o.shot_id;await action(route,o)})}
+refresh();
+</script></body></html>

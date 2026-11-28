@@ -1,242 +1,210 @@
-# 15 秒短剧 Skill · 全流程导演与生产控制中心
+# 15 秒短剧 Skill · 四平台专用与独立生产控制中心
 
-一套面向 AI 短剧的完整生产 Skill：把故事拆成剧本、分镜、角色与场景资产、首帧与视频提示词，逐镜生成、逐镜验收，并在本地用一套可视化控制中心管住「谁生成、用什么模型、哪一版被采用、谁审过、哪条返工没关」。
+一套跑在你自己电脑上的短剧生产控制中心，加上四个 Agent 宿主（豆包 Work / Codex / TRAE / WorkBuddy）的专用 Skill 入口。工作台负责管住「每个镜头用了哪个平台、哪个模型、哪一版被采用、谁审过、哪条返工没关」，四个平台 Skill 负责在你实际干活的宿主里把任务正确交接出去。
 
-核心原则两条：
+三条原则，写进了代码而不只是文档：
 
-1. **创作规范与平台执行解耦。** 先探测当前环境真实能力，再规划可执行方案；不能执行时交付生产包并明确标注「未生成视频」。
-2. **没看过就不能判通过。** AI 没有实际查看的画面不得判定人物一致，没有检查过的成片不得标记已通过；缺少视频理解能力时显示「待视觉复核」，而不是假装检查完成。
+1. **宿主和模型是两个维度。** 豆包 Work、Codex、TRAE、WorkBuddy 是调用环境；真正生成画面的平台和模型由 `model-profiles.json` 与实际任务记录决定。不能因为宿主叫 Codex 就把视频模型记成 Codex。
+2. **工作台管数据，模型可替换。** 换平台不重置角色 ID、身份版本、基准参考图、镜头 ID、道具状态与审核记录，只改受影响的提示词格式和生成参数。
+3. **没看过就不能判通过。** AI 没有实际查看的画面不得判定人物一致；没有检查过的成片不得标记已通过；缺少视频理解能力时显示「待视觉复核」，而不是假装检查完成。
 
-## 它解决什么问题
+## 仓库里有什么
 
-AI 短剧最难的两件事，一是跨镜头的一致性漂移（脸、发型、服装、道具、空间关系、台词时长），二是生产过程中「谁改了哪一版、审核结论还算不算数」的失控。本 Skill 把这两件事都做成可核验的流程：
-
-- 角色数字身份建档（`character_id` + `identity_version` + 人物圣经），未知信息必须标记，不得伪称从参考图得出
-- 镜头级角色绑定，写明角色 ID、出现顺序、画面位置、起止姿态、机位与轴线
-- 跨镜状态台账，合法变化需记录 `change_event`，禁止无记录的换脸换装
-- 资产清单 + 视觉审核量表 + 漂移诊断与最小修复路径
-- 依赖任务图（DAG），只有真实存在且通过门禁的资产才能解除下游阻塞
-- 生产控制中心：镜头、素材、多版本采用、模型来源、审核证据、返工任务一本账
-- 双重质量复核：成片前素材复核 → 合成 → 成片独立复核，两道门禁都过才允许交付
-- 逐项记录 `status=completed|failed|blocked|not_run`，不虚构平台参数与生成结果
-
-## 这一版新增了什么
-
-原有能力全部保留：角色全维度锁定、参考图技术审查、跨平台自适应适配、AI 导演（镜头语言与空间调度）、声音与口型方案、依赖任务调度、质量门禁、漂移修复。在此之上加了两套相互配合的机制和三个可运行的新能力。
-
-### 一、短剧生产控制中心
-
-不只显示进度，而是一个「管素材、管版本、管审核、管返工」的本地工作台：
-
-- **可视化生产进度**：计划镜头、素材数量、已采用素材、审核记录、待办任务一屏可见
-- **按剧情顺序管理素材**：每个镜头下按 `order` 展示首帧、图片、视频、音频，同一次生成的不同尝试作为独立素材保留，可以选定最终采用的版本
-- **生成模型与来源追踪**：每条素材记录平台、模型、提示词、生成参数、生成时间、来源素材、角色身份版本、文件 SHA256
-- **审核与返工登记**：可创建生成任务或返工任务，登记每个素材的审核维度（身份 / 视觉 / 连续性 / 音频）、结论、审核人、证据与时间点
-- **门禁一键运行**：素材技术检查、合成前复核门禁、成片复核门禁，结果直接给出阻断原因
-- **媒体预览**：镜头素材可直接在页面内预览，无法内嵌预览的格式会明确提示
-
-### 二、双重质量复核
-
-两次检查，缺一不可：
+| 位置 | 作用 |
+| --- | --- |
+| `asset-locked-storyboard-video/` | 完整导演 Skill：主流程、30 份规范、11 个脚本、6 个模板、工作台页面 |
+| `平台专用技能包/` | 四个独立可安装的 Skill 文件夹（`codex` / `doubao-work` / `trae` / `workbuddy`），每个含 `SKILL.md` 与 `使用提示.md` |
+| `四平台独立技能安装包/` | 上述四个 Skill 的成品 ZIP，直接导入各平台技能管理入口 |
+| `启动工作台_Windows.bat` / `启动工作台_Mac_Linux.command` | 一键启动独立工作台 |
+| `跨平台运行说明.md` | 运行环境、模型配置、典型流程、安全与局限 |
+| `详细使用操作手册.md` | 十章完整操作手册：从环境准备到上线验收清单 |
+| `使用说明.md` | 最短路径上手：安装、调用、控制中心启动 |
 
 ```
-角色设定 → 分镜 → 素材生成（沿用原身份锁定与生成规范）
-        │
-        ▼
-   第一道：成片前素材复核
-   文件完整性 / 人物身份 / 动作 / 服装 / 道具 / 声音 / 跨镜连续性
-        │ 不通过 → 阻断合成
-        ▼
-   正式合成视频
-        │
-        ▼
-   第二道：成片独立复核
-   成片文件 / 画面 / 声音 / 镜头衔接 / 人物连续性 / 故事完整度 / 片尾
-        │ 不通过 → 阻断交付
-        ▼
-   最终交付
+asset-locked-storyboard-video/
+├── SKILL.md              主流程：阶段 0 能力发现 → 5 交付，含跨平台生产与四宿主入口的强制条款
+├── control-center/       工作台页面（进度、素材、审核、返工、模型路由、任务交接）
+├── references/           30 份规范 + 1 份能力 schema
+├── scripts/              11 个可离线运行的脚本
+├── templates/            6 个 JSON 模板
+└── examples/             generic 能力快照与偏好示例
 ```
 
-四条硬性判定写进了脚本，不是文档里的口号：
+## 这一版升级了什么
 
-- 成片前门禁要求每个镜头「必须且只能有一个被采用的正式视频素材」，且该素材必须同时具备 `identity / visual / continuity / audio` 四类**带证据**的通过记录
-- 成片门禁要求「必须且只能有一个被采用的最终成片」，并具备 `final_visual / final_audio / final_continuity / final_narrative` 四类独立复核记录
-- 成片门禁以通过的前置门禁为基础：前置门禁未通过、或通过之后镜头素材哈希发生变化，一律不通过
-- 存在未关闭的高风险（`high` / `critical`）返工任务时，所选素材无法通过任何一道门禁
+上一版是一个「导演 Skill + 生产控制中心」，这一版把它变成**可独立运行的跨平台生产系统**。
 
-### 三、视频自动抽帧
+### 一、独立工作台取代内嵌服务
 
-对真实视频按时间点抽取采样画面，建立可交给视觉模型或人工审核的证据包：
+新增 `scripts/studio_server.py`：一条命令启动，自动打开浏览器，可指定任意项目目录，未指定时用 `projects/我的短剧`。Windows 双击 `启动工作台_Windows.bat`，macOS / Linux 运行 `sh 启动工作台_Mac_Linux.command`。服务只监听 `127.0.0.1`，仍然拒绝跨站写入。
 
-- 提取镜头开头、中间、结尾及更多采样点（`--count` 支持 3–30，默认 7）
-- 每帧记录时间点（秒）、帧文件 SHA256、相对路径；整包记录原视频 SHA256 与视频流信息
-- 采样刻意避开严格末尾边界，同时覆盖片头、片中、片尾
-- 结果写入 `visual-review-queue.json`，状态固定为 `needs_visual_review`，并生成覆盖「面部与身体比例、发型服装与标志特征、人物与道具连续性、画面伪影与运动合理性、镜头首尾衔接、对白与口型同步、音频噪声与声线」的审核清单（成片另加镜头顺序、字幕片尾、叙事节奏三项）
-- 控制台的抽帧缩略图只服务已登记在队列里的帧，未登记的路径不会外泄
+原有的 `production_center.py` 保留，继续提供 `init / check / preflight / final / serve`，并作为工作台的底座被复用。
 
-**抽帧成功不等于审核通过**：抽帧只是证据准备，状态永远是「待视觉复核」，必须在真实视觉工具或人工看过之后才能写结论。
+### 二、跨平台模型路由
 
-### 四、角色一致性复核
+新增 `scripts/model_router.py`，把「配置模型 → 建任务 → 导出交接 → 导入真实结果」串成闭环：
 
-把手里的角色资产变成具体的检查项，而不是笼统的「看看像不像」：
+- **模型配置**：预置通用图片 / 视频 / 配音三个手动平台配置，外加一个可选的兼容文本接口配置。配置是「能力声明」，声明支持 `text / image / video / audio` 哪些任务类型
+- **任务队列**：每个任务拿到唯一 `JOB-00001` 形式的 ID，记录 `shot_id`、`profile_id`、模型、平台、任务类型、提示词、参数、引用素材、状态
+- **交接包**：导出 `handoffs/JOB-xxxxx.json`，含镜头信息、提示词、参数与来源素材的 SHA256，明确标注「在对应平台完成生成，不得将未生成任务标为完成」
+- **结果导入**：把真实文件放回项目目录后导入，系统按任务类型校验扩展名（视频 `mp4/mov/mkv/webm`、图片 `png/jpg/jpeg/webp`、音频 `wav/mp3/ogg/m4a`、文本 `txt/md/json`），非空才算数，并自动登记模型、平台、提示词、参数、来源素材、文件哈希，同时把任务置为 `completed`
+- **重复导入拦截**：已完成的任务不允许再导入，避免一任务多结果导致台账失真
+- **可选文本接口**：只接受不带凭证与查询参数的 HTTPS `chat/completions` 端点，密钥必须放在 `DRAMA_` 前缀的环境变量里（配置文件里写 `api_key`、`token`、`password` 会被直接拒绝），调用时不跟随重定向，防止密钥被转到别的主机
 
-- 抽帧结果通过镜头的 `character_ids` 关联到人物圣经与角色基准图，逐项生成检查条目
-- 当前环境有可用的视觉理解工具时，用它对照基准图做真实检查并留证据
-- 没有视觉能力时保留 `needs_visual_review` 状态，不把「已抽帧」写成「已通过」
-- 涉及动作、口型、声音的部分必须看连续视频或听音频，不能只凭三张静帧下结论
+**图片、视频、音频平台的自动 API 调用尚未实现**，包内不会用文本接口假装完成媒体生成。
 
-### 五、问题驱动返工
+### 三、四宿主任务交接
 
-问题不再是聊天里的一句「这条不对」，而是可追踪的工单：
-
-- 人物漂移、服装版本错误、道具不连续、音频异常等，按分类、严重程度、受影响素材登记为 `FIX-0001` 形式的返工任务
-- 任务绑定当时的素材哈希，修复后产生**新素材 ID**，旧素材与旧审核记录完整保留
-- 高风险问题未关闭前，阻挡素材进入合成与交付流程
-- 新素材必须重新走技术、视觉、音频复核；旧结论不会自动沿用
-
-### 六、复核证据与素材哈希绑定
-
-所有审核记录都带 `asset_sha256`。素材被修改或替换后哈希变化，旧审核证据自动失效，系统会要求重新审核——这条机制专门用来防止「改了素材、继续沿用旧放行结论」。
-
-## 生产控制中心怎么用
-
-初始化与启动（需要 Python 3，技术检查另需 FFmpeg 附带的 `ffprobe`）：
+新增 `scripts/platform_handoff.py` 与 `references/four-agent-hosts.md`：
 
 ```bash
-python scripts/production_center.py init ./my-drama
-python scripts/production_center.py serve ./my-drama
+python scripts/platform_handoff.py ./projects/我的短剧 codex JOB-00001
 ```
 
-浏览器打开 `http://127.0.0.1:8765` 即为本地工作台。服务只绑定 `127.0.0.1`，并会拒绝跨站写入请求，不作为公网生产服务使用。
+把 `codex` 换成 `doubao-work`、`trae`、`workbuddy` 即可。输出一份 JSON 和一份 Markdown，包含项目元数据、镜头定义、任务、来源素材哈希、宿主专属操作指引，以及四条强制质量门禁（`real-media-check`、`identity-review-with-evidence`、`audio-review-with-evidence`、`final-independent-review`）。状态固定为 `handoff_only_not_executed`——交接不等于执行。
 
-命令行同样能跑门禁，返回 JSON，未通过时退出码为 1，便于接进自动化流程：
+### 四、四个平台专用 Skill
 
-```bash
-python scripts/production_center.py check     ./my-drama   # 素材技术检查
-python scripts/production_center.py preflight ./my-drama   # 成片前门禁
-python scripts/production_center.py final     ./my-drama   # 成片门禁
-```
+| 平台 | Skill 名称 | 面向谁 | 安装位置 | 关键约束 |
+| --- | --- | --- | --- | --- |
+| 豆包 Work | `drama-director-doubao-work` | 创作者、运营、不写代码的人 | 技能管理或自建技能入口导入 | 云端访问不到本地 `127.0.0.1` 时不得声称工作台已同步，导出 JSON 后由本地导入 |
+| Codex | `drama-director-codex` | 开发者 | 项目内 `.agents/skills/drama-director-codex/` 或 `~/.agents/skills/` | 先探测 Python / FFmpeg、目录权限与可用媒体工具，真实外部调用需授权 |
+| TRAE | `drama-director-trae` | IDE 用户 | 工作区 `.trae/skills/drama-director-trae/` | 打开可信工作区、确认技能已启用；无文件或终端权限时只给操作清单 |
+| WorkBuddy | `drama-director-workbuddy` | 协作团队 | 技能管理入口上传技能包 | 重视任务分工、审核证据与交付清单；企业管理员可限制安装 |
 
-项目目录内的数据文件：
+四个 Skill 共用同一套创作与审核协议：角色圣经建档 → 镜头绑定 → 逐镜提示词 → 真实能力检测 → 任务交接 → 双道门禁 → 交付清单。四份 `使用提示.md` 各自写明安装方式、调用示例与平台约束。
+
+### 五、工作台页面新增面板
+
+控制台在原有「质量门禁」「视频抽帧与问题追踪」「生产任务与审核操作」「按剧情顺序排列的素材」「任务队列」之外，新增：
+
+- **跨平台模型路由与任务交接**：创建跨平台生成任务（选配置、填镜头 ID、提示词、引用素材）、导入平台生成结果（填任务 ID、项目内结果路径、新素材 ID）
+- **添加 / 修改模型配置**：配置 ID、显示名称、适配器（手动生成平台 / 兼容文本接口）、支持能力（视频 / 图片 / 音频 / 文本）、真实模型 ID、HTTPS 接口地址、密钥环境变量名称，页面明确标注「密钥只放在本机环境变量，不填写到网页配置里」
+- **跨平台任务队列**：查看任务状态、导出通用交接包、导出豆包 Work / Codex / TRAE / WorkBuddy 专用包、对兼容文本接口任务发起真实调用，并与原有的返工任务队列分开展示
+
+## 工作台怎么跑
+
+最低要求 Python 3.10+；视频抽帧与媒体元数据检查另需 FFmpeg（`ffmpeg` / `ffprobe` 可用）。
+
+- **Windows**：双击 `启动工作台_Windows.bat`（脚本会先试 `py -3`，失败再用 `python`）
+- **macOS / Linux**：`sh 启动工作台_Mac_Linux.command`，或双击（可能需要系统允许执行）
+- **手动指定项目**：`python asset-locked-storyboard-video/scripts/studio_server.py --project "/你的项目路径"`
+
+默认项目目录是 `projects/我的短剧/`，会自动创建 `project.json`、`shots.json`、`assets.json`、`reviews.json`、`tasks.json`、`jobs.json`、`model-profiles.json`。工作台会尝试自动打开浏览器，没有打开就访问 `http://127.0.0.1:8765`；关闭终端或 Ctrl+C 即停止。
+
+## 一部短剧怎么走完
+
+1. **准备输入**：故事、总时长、画幅（默认 9:16）、风格、角色参考图、声音与字幕要求
+2. **先锁角色再拆镜头**：建立人物圣经（脸型骨相、五官比例、发际线、肤色、头身比、服装材质配饰、声线、表演习惯），分离永久身份与剧情可变状态；没有批准的参考图不声称角色已锁定
+3. **建镜头时间轴**：逐镜写角色 ID 与身份版本、服装版本、站位视线、动作起止、道具归属、场景坐标、对白与音效，时间轴从 0 连续覆盖目标时长
+4. **配置模型**：在工作台添加配置，声明它能做哪类任务
+5. **创建任务**：选配置、填镜头 ID 与提示词、勾选引用素材，得到 `JOB-xxxxx`
+6. **导出交接包**：把 `handoffs/JOB-xxxxx.json` 交给对应平台，或直接导出四宿主专用包
+7. **去平台生成**：在真实平台出图出视频，把结果复制到项目的 `media/` 目录
+8. **导入结果**：输入任务 ID、文件相对路径、新素材 ID，系统登记模型与哈希并把任务置为已完成
+9. **抽帧与复核**：对视频抽 3–30 帧（记录时间点、帧哈希、原视频哈希），由真实视觉工具或人工填写审核证据；发现问题登记 `FIX-*` 返工任务
+10. **合成前门禁**：每个镜头必须且只能有一个被采用的正式视频，且 `identity / visual / continuity / audio` 四类证据齐全，否则阻断合成
+11. **合成**：门禁通过后才允许合成
+12. **成片门禁**：成片作为 `final_video` 导入，完成 `final_visual / final_audio / final_continuity / final_narrative` 四类独立复核，且前置门禁仍有效、素材哈希未变化，才允许交付
+13. **交付**：区分「已真实执行 / 已规划未执行 / 待审核」三类清单
+
+## 数据文件
 
 | 文件 | 作用 |
 | --- | --- |
 | `project.json` | 项目元数据（标题、目标时长、画幅） |
 | `shots.json` | 镜头列表，按剧情顺序与时间轴排布 |
-| `assets.json` | 每次生成的独立素材，含路径、平台、模型、提示词、参数、来源、采用状态 |
-| `reviews.json` | 审核证据，绑定素材哈希、审核维度、结论、审核人、时间 |
-| `tasks.json` | 生成与返工任务，含类型、状态、严重程度、分类 |
+| `assets.json` | 每次生成的独立素材：路径、平台、模型、提示词、参数、来源、任务 ID、文件哈希、采用状态 |
+| `reviews.json` | 审核证据：绑定素材哈希、审核维度、结论、审核人、时间 |
+| `tasks.json` | 返工与生成任务：类型、状态、严重程度、分类 |
+| `jobs.json` | 跨平台任务：任务 ID、配置、模型、平台、类型、提示词、参数、来源素材、状态 |
+| `model-profiles.json` | 模型配置与能力声明（不含任何密钥） |
 | `visual-review-queue.json` | 抽帧结果与待复核清单 |
+| `handoffs/` | 导出的交接包（通用包与四宿主专用包） |
+| `media/` | 从各平台拿回来的真实素材 |
+| `generated_text/` | 兼容文本接口真实调用产生的文本 |
 | `technical-check.json` / `preflight-gate.json` / `final-gate.json` | 三类检查的最近一次结果快照 |
 
-素材技术检查会核对：素材 ID 与镜头 ID 不重复、来源引用存在、镜头引用存在、文件真实存在且非空、媒体可解码（`ffprobe` 可用时校验音视频流/时长/分辨率/帧率）、时间轴从 0 开始无重叠无缺口且覆盖目标时长。**技术检查不等于视觉审核**，未实际审核的视频不会因此自动通过。
-
-## 抽帧与问题登记
-
-```bash
-# 对真实视频抽 7 帧，生成视觉复核清单
-python scripts/visual_review_pipeline.py audit ./my-drama A001 --count 7
-
-# 把发现的漂移问题登记为返工任务
-python scripts/visual_review_pipeline.py issue ./my-drama A001 \
-  --category identity --severity high --description "第 3 秒起发型发生漂移"
-```
-
-同样两件事在控制台里就是「生成视觉复核证据」和「记录发现的问题」两个面板。
-
-## 完整生产流程
-
-控制中心不是独立的一套规则，它挂在原有导演流程的第 4 阶段，把执行结果收进同一本账：
-
-- **阶段 0 能力发现**：列举当前真实可用工具与平台，输出 `capability_snapshot`（含证据来源、验证日期、能力状态），不臆测权限
-- **阶段 1A 角色身份建档**：人物圣经、身份版本、确定性等级、可变更策略；参考图不可见的部分标为待定
-- **阶段 1 剧情与资产模型**：角色卡、场景卡、道具卡、剧情节拍、对白、跨镜状态台账
-- **阶段 1B 角色资产生产**：资产清单与覆盖矩阵，候选→审核→批准→冻结版本
-- **阶段 2 自适应分段与分镜**：按平台允许档位选分段策略，15 秒是偏好而非硬约束
-- **阶段 2A 导演决策与空间调度**：戏剧任务、情绪曲线、场景坐标、视线与轴线、音频重点、段尾钩子
-- **阶段 2B 镜头级角色绑定**：每镜的角色版本、位置、服装、持物手、起止姿态、机位
-- **阶段 3 资产、首帧与提示词适配**：把提示词拆成故事意图 / 身份 / 空间 / 动作 / 平台参数 / 负面约束，按参考图上限分配
-- **阶段 3B 依赖任务图**：DAG 就绪、阻塞、完成与循环依赖计算
-- **阶段 4 执行与质量门禁**：结合生产控制中心登记素材、审核证据、运行双重复核
-- **阶段 4B 漂移诊断与定向修复**：按问题类别走最小修复路径，两次失败停止盲试
-- **阶段 5 拼接与交付**：统一画幅/分辨率/帧率/音量/字幕，输出已完成、待执行、能力未知三类清单
-
-运行模式：`AUTO` 全自动、`REVIEW` 分阶段确认、`STAGE` 只做指定阶段、`MIGRATE` 平台切换后只重算受影响部分。
-
-## 目录结构
-
-```
-SKILL.md                          主流程（阶段 0 → 5 + 生产控制中心与双重复核强制条款）
-使用说明.md                        快速上手：安装、调用、控制中心启动
-使用说明_生产控制中心.md           控制台逐步操作说明
-control-center/index.html          本地可视化工作台页面
-references/                       28 份规范 + 1 份能力 schema
-                                  角色圣经 / 身份锁定 / 参考图标准 / 多人协议 / 资产生产流水线
-                                  分镜连续性 / 导演引擎 / 空间调度 / 声音口型 / 任务编排
-                                  视觉审核协议 / 视觉复核流水线 / 控制中心 / 质检门禁
-                                  漂移修复 / 故障排查 / 平台自适应 / 提示词模板与适配
-templates/                        6 个模板：人物圣经、镜头角色绑定、资产清单、
-                                  视觉审核、导演计划、任务图
-scripts/                          8 个可离线运行的脚本（见下）
-examples/                         generic 能力快照与偏好示例
-```
-
-脚本一览：
+## 脚本一览
 
 | 脚本 | 职责 |
 | --- | --- |
-| `production_center.py` | 控制中心：`init` / `check` / `preflight` / `final` / `serve` |
+| `studio_server.py` | 独立工作台启动器：项目初始化、模型路由接口、自动开浏览器 |
+| `production_center.py` | 基础工作台与门禁：`init` / `check` / `preflight` / `final` / `serve` |
+| `model_router.py` | 模型配置、任务提交、交接包导出、结果导入、可选文本接口调用 |
+| `platform_handoff.py` | 生成四宿主专用交接包（JSON + Markdown） |
 | `visual_review_pipeline.py` | 视频抽帧建档（`audit`）与返工任务登记（`issue`） |
 | `adapt.py` | 能力快照驱动的参数与策略决策 |
-| `director_validate.py` | 导演计划静态校验（时长、坐标、台词、音频时间线） |
-| `workflow_plan.py` | 任务图就绪/阻塞/完成/循环依赖计算 |
+| `director_validate.py` | 导演计划静态校验：时长、坐标、台词、音频时间线 |
+| `workflow_plan.py` | 任务图就绪 / 阻塞 / 完成 / 循环依赖计算 |
 | `validate_characters.py` | 角色 ID、版本、镜头引用、未声明换装与状态接续校验 |
 | `review_gate.py` | 校验审核报告并计算门禁，拒绝缺证据的「通过」 |
 | `asset_audit.py` | 资产格式、尺寸、宽高比、清晰度启发式、曝光、完整性与覆盖检查 |
 
-## 安装
+## 安装 Skill
 
-把本仓库内容作为一个 Skill 目录安装到支持 Skills 的环境中，目录名与 `SKILL.md` 里的 `name`（`asset-locked-storyboard-video`）保持一致，例如 `…/.skills/asset-locked-storyboard-video/`。控制中心与抽帧脚本只依赖 Python 3 标准库，媒体校验需要 `ffprobe`，抽帧需要 `ffmpeg`。
+- **四个平台入口**：直接导入 `四平台独立技能安装包/` 里的 ZIP，或把 `平台专用技能包/<平台>/` 整个目录按上表位置放好，目录内直接包含 `SKILL.md`
+- **完整导演 Skill**：把 `asset-locked-storyboard-video/` 整个目录安装到支持 Skills 的环境，目录名与 `SKILL.md` 里的 `name` 保持一致
+- **工作台**：不需要安装，它是本仓库自带的本机程序，双击启动脚本即可
 
 ## 调用示例
 
-> 把这个故事做成 60 秒竖屏短剧，使用自动导演模式。先锁定角色全维度形象与参考图，规划剧情节奏、空间走位、逐镜台词与音频，检测当前平台能力后生成可执行任务图；有真实工具才生成视频，逐镜验收，最后用双重复核跑一遍成片前和成片后的门禁。
+> 请使用「短剧全流程导演-豆包 Work」技能，先建立角色圣经与镜头清单，逐镜生成可执行提示词。确认当前会话可用的真实图片 / 视频工具；能调用才执行，否则输出交接任务包。将结果按照镜头编号、模型和平台登记到独立工作台，成片前后均复核。
+
+命令行侧的等价入口：
+
+```bash
+# 提交任务并导出交接包
+python asset-locked-storyboard-video/scripts/model_router.py submit ./projects/我的短剧 --file job.json
+python asset-locked-storyboard-video/scripts/model_router.py handoff ./projects/我的短剧 JOB-00001
+
+# 导入真实结果
+python asset-locked-storyboard-video/scripts/model_router.py import ./projects/我的短剧 JOB-00001 \
+  --path media/SH01_v1.mp4 --asset-id A001
+
+# 抽帧与问题登记
+python asset-locked-storyboard-video/scripts/visual_review_pipeline.py audit ./projects/我的短剧 A001 --count 7
+python asset-locked-storyboard-video/scripts/visual_review_pipeline.py issue ./projects/我的短剧 A001 \
+  --category identity --severity high --description "第 3 秒起发型发生漂移"
+```
+
+运行模式：`AUTO` 全自动、`REVIEW` 分阶段确认、`STAGE` 只做指定阶段、`MIGRATE` 平台切换后只重算受影响部分。
 
 ## 离线校验
 
-不需要 FFmpeg、不调用任何平台也能跑：
+除抽帧之外，其余脚本不需要 FFmpeg、不调用任何平台：
 
 ```bash
-python scripts/adapt.py examples/generic-capability.json examples/generic-preferences.json
-python scripts/director_validate.py templates/director-plan.template.json
-python scripts/workflow_plan.py templates/workflow.template.json
-python scripts/review_gate.py templates/visual-review.template.json
-python scripts/asset_audit.py --help
-python scripts/production_center.py init ./demo && python scripts/production_center.py check ./demo
+python asset-locked-storyboard-video/scripts/adapt.py asset-locked-storyboard-video/examples/generic-capability.json asset-locked-storyboard-video/examples/generic-preferences.json
+python asset-locked-storyboard-video/scripts/director_validate.py asset-locked-storyboard-video/templates/director-plan.template.json
+python asset-locked-storyboard-video/scripts/workflow_plan.py asset-locked-storyboard-video/templates/workflow.template.json
+python asset-locked-storyboard-video/scripts/review_gate.py asset-locked-storyboard-video/templates/visual-review.template.json
+python asset-locked-storyboard-video/scripts/production_center.py init ./demo
+python asset-locked-storyboard-video/scripts/production_center.py check ./demo
 ```
 
-`validate_characters.py` 需要两个输入（角色列表与分镜列表），按 `python scripts/validate_characters.py <人物圣经.json> <分镜.json>` 调用，缺少任一个会只报用法。
-
-这些脚本只校验结构、引用、哈希与时间轴逻辑，输出通过不代表真实画面、口型或角色身份已通过视觉审核。
+`validate_characters.py` 需要两个输入（角色列表与分镜列表），按 `... validate_characters.py <人物圣经.json> <分镜.json>` 调用。
 
 ## 能力边界
 
-这部分必须如实说明，不能包装成「全自动审核」：
+这部分如实写，不包装成「全自动审核」：
 
-- **自动抽帧与问题管理已实现**，但「是否换脸、动作是否自然、口型是否同步」仍需要接入视觉与音频理解模型，或由人工实际查看。当前包未预接任何第三方视觉模型。
-- 没有 `ffmpeg` / `ffprobe` 时不会假装检验过视频：`audit` 直接报错说明缺依赖，技术检查返回 `unverified`，`unverified` 永远不等于 `pass`。
-- 静态脚本不生成视频、不识别视频中的人脸、不证明口型同步；真实平台调用依赖使用者已授权的工具。
-- 控制台里的「生成」按钮只登记任务，不伪造平台调用；服务仅监听本机回环地址，正式部署需要额外的鉴权、持久化与权限策略。
-- 门禁判定已逐条验证过：无审核证据阻断、四类证据缺项阻断、高风险返工未关闭阻断、素材改动后旧证据失效、双道证据齐全时放行。验证的是判定逻辑本身，它只消费真实文件与真实哈希；系统并不具备自动识别画面内容的能力。
-- 抽帧为均匀采样，不是自动镜头边界识别；涉及动作与口型的片段仍需查看连续视频。
+- **图片、视频、音频平台的自动 API 调用未实现**。手动平台走「导出交接包 → 平台生成 → 导入结果」；兼容文本接口只支持 `chat/completions` 风格的 HTTPS 文本端点，接口兼容性需以提供商文档和实测为准
+- **自动抽帧与问题管理已实现**，但「是否换脸、动作是否自然、口型是否同步」仍需接入视觉与音频理解模型，或由人工实际查看。当前包未预接任何第三方视觉模型
+- 没有 `ffmpeg` / `ffprobe` 时不会假装检验过视频：抽帧直接报错说明缺依赖，技术检查返回 `unverified`，而 `unverified` 永远不等于 `pass`
+- 工作台的「生成」按钮只登记任务，不伪造平台调用；模型配置是能力声明，不是对供应商全部接口能力的动态验证
+- 技术检查、抽帧与文件哈希不能证明人物身份一致，也不能代替成片复核
+- 服务只监听 `127.0.0.1`，无账号系统、团队权限、云同步和后台任务持久化；JSON 写入用临时文件替换，但不等于事务数据库，多个进程同时写同一项目不受支持
+- 门禁判定已逐条验证过：无审核证据阻断、四类证据缺项阻断、高风险返工未关闭阻断、素材改动后旧证据失效、双道证据齐全时放行。验证的是判定逻辑本身，它只消费真实文件与真实哈希
 
 ## 使用约定
 
-- 用户提供的参考图是外观事实的优先来源；不可见的背面、身高、声音标注为待定或创作假设
-- 原参考图不可覆盖，资产登记路径、来源、哈希、视角、版本与批准状态
-- AI 没实际看过的画面不判人物一致；没检查过的成片不标已通过；平台缺视频理解能力时显示「待视觉复核」
+- 用户提供的参考图是外观事实的优先来源；不可见的背面、身高、声音标注为待定或创作假设，不伪称从图片得出
+- 原参考图不可覆盖；资产登记路径、来源、哈希、视角、版本与批准状态
+- AI 没实际看过的画面不判人物一致；没检查过的成片不标已通过
 - 素材修改或替换后按新素材 ID 重新审核，旧证据不得沿用
 - 同一镜头连续两次定向修复失败即停止盲试，改用拆镜、减少遮挡或换用已验证参考
+- 密钥只放环境变量，不写进项目 JSON、提示词或任务包
 - 不以规避平台审核为目标修改提示词
 
 ## 声明

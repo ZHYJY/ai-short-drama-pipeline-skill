@@ -23,7 +23,34 @@ label{font-size:13px;display:block;margin:9px 0}.actions{display:flex;flex-wrap:
 <form id="taskForm"><strong>创建生成 / 返工任务</strong><label>任务ID<input name="id" required placeholder="TASK-001"></label><label>镜头ID<input name="shot_id" placeholder="SH01"></label><label>任务类型<select name="type"><option>generate</option><option>regenerate</option><option>edit</option><option>audio</option></select></label><label>备注<textarea name="notes" rows="2"></textarea></label><button>添加任务</button></form>
 <form id="assetForm"><strong>登记真实素材</strong><label>素材ID<input name="id" required placeholder="A001"></label><label>镜头ID<input name="shot_id" placeholder="SH01（成片留空）"></label><label>素材类型<select name="kind"><option>video</option><option>first_frame</option><option>image</option><option>audio</option><option>final_video</option><option>character_reference</option></select></label><label>项目内文件相对路径<input name="path" placeholder="media/shot01.mp4"></label><label>模型名称<input name="model" placeholder="unknown"></label><label>平台<input name="platform" placeholder="unknown"></label><label>提示词<textarea name="prompt" rows="2"></textarea></label><button>登记素材</button></form>
 <form id="reviewForm"><strong>登记真实复核结果</strong><label>素材ID<input name="target_id" required placeholder="A001"></label><label>审核维度<select name="scope"><option>identity</option><option>visual</option><option>continuity</option><option>audio</option><option>final_visual</option><option>final_audio</option><option>final_continuity</option><option>final_narrative</option></select></label><label>结果<select name="result"><option>unverified</option><option>pass</option><option>fail</option></select></label><label>审核人或真实视觉工具<input name="reviewer" required placeholder="审核人/工具名称"></label><label>审核证据与时间点<textarea name="evidence" required rows="3" placeholder="记录实际观察的帧、时间点、检查依据和结论"></textarea></label><button>保存复核</button></form>
-</div><div id="message" role="status"></div><h2>按剧情顺序排列的素材</h2><div id="shots"></div><h2>成片与未归属镜头的素材</h2><div id="global"></div><h2>任务队列</h2><div id="tasks"></div></main>
+</div><div id="message" role="status"></div><h2>按剧情顺序排列的素材</h2><div id="shots"></div><h2>成片与未归属镜头的素材</h2><div id="global"></div><h2>跨平台模型路由与任务交接</h2>
+<p class="muted">工作台与模型解耦：手动平台通过任务包交接，兼容接口的文本模型可选真实API调用。不会假装调用没有授权的图片/视频模型。</p>
+<div id="modelStats" class="grid"></div>
+<div class="forms">
+<form id="jobForm"><strong>创建跨平台生成任务</strong>
+<label>模型配置<select name="profile_id" id="profileSelect" required></select></label>
+<label>任务类型<select name="kind"><option>video</option><option>image</option><option>audio</option><option>text</option></select></label>
+<label>镜头ID（项目级留空）<input name="shot_id" placeholder="SH01"></label>
+<label>生成提示词<textarea name="prompt" required rows="4"></textarea></label>
+<label>引用素材ID（逗号分隔）<input name="source_asset_ids" placeholder="A001,A002"></label>
+<button>加入任务队列</button></form>
+<form id="importForm"><strong>导入平台生成结果</strong>
+<label>任务ID<input name="job_id" required placeholder="JOB-00001"></label>
+<label>项目内结果路径<input name="path" required placeholder="media/SH01.mp4"></label>
+<label>新素材ID<input name="asset_id" required placeholder="SH01-V01"></label>
+<label>备注<textarea name="notes" rows="2"></textarea></label>
+<button>导入并关联模型记录</button></form>
+<form id="profileForm"><strong>添加 / 修改模型配置</strong>
+<label>配置ID<input name="id" required placeholder="my-text-model"></label>
+<label>显示名称<input name="label" required placeholder="我的模型"></label>
+<label>适配器<select name="provider"><option value="manual">手动生成平台</option><option value="openai_compatible_text">兼容文本接口</option></select></label>
+<label>支持能力<select name="capability"><option value="video">视频</option><option value="image">图片</option><option value="audio">音频</option><option value="text">文本</option></select></label>
+<label>真实模型ID（兼容接口需要）<input name="model" placeholder="your-model-id"></label>
+<label>HTTPS接口地址（兼容接口需要）<input name="endpoint" placeholder="https://your-provider.example/v1/chat/completions"></label>
+<label>密钥环境变量名称<input name="api_key_env" value="DRAMA_TEXT_API_KEY"></label>
+<button>保存配置</button><p><small>密钥只放在本机环境变量，不填写到网页配置里。</small></p></form>
+</div>
+<h2>跨平台任务队列</h2><p class="muted">点击对应任务的宿主按钮，生成专属交接包。这里的“宿主”是执行Skill的Agent，不是实际视频模型。</p><div id="modelJobs"></div><h2>原导演返工任务队列</h2><div id="tasks"></div></main>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let D={};const order={character_reference:0,first_frame:1,image:2,video:3,audio:4,final_video:5};
@@ -50,4 +77,22 @@ async function action(name,data={}){try{let res=await request(name,data);$('mess
 for(let [id,route] of [['taskForm','task'],['assetForm','asset'],['reviewForm','review'],['analyzeForm','analyze'],['issueForm','issue']]){
 $(id).addEventListener('submit',async e=>{e.preventDefault();let o=Object.fromEntries(new FormData(e.target));if(!o.shot_id)delete o.shot_id;await action(route,o)})}
 refresh();
+
+let M={profiles:[],jobs:[]};
+async function refreshModels(){
+ const r=await fetch('/api/models');M=await r.json();
+ $('profileSelect').innerHTML=M.profiles.filter(p=>p.enabled).map(p=>`<option value="${esc(p.id)}">${esc(p.label)} · ${esc(p.capabilities.join('/'))}</option>`).join('');
+ $('modelStats').innerHTML=M.profiles.map(p=>`<div class="card"><strong>${esc(p.label)}</strong><p>${esc(p.provider)} · ${esc(p.capabilities.join('/'))}</p><small>${p.enabled?'可选':'未启用'}</small></div>`).join('');
+ $('modelJobs').innerHTML=M.jobs.map(j=>`<div class="card"><strong>${esc(j.id)}</strong> · ${esc(j.kind)} · <span class="badge">${esc(j.status)}</span><p>${esc(j.platform)} / ${esc(j.model)} · ${esc(j.shot_id||'项目级')}</p><p>${esc(j.prompt)}</p><div class="actions"><button class="secondary" data-handoff="${esc(j.id)}">导出通用交接包</button><button class="secondary" data-host="doubao-work" data-job="${esc(j.id)}">豆包Work</button><button class="secondary" data-host="codex" data-job="${esc(j.id)}">Codex</button><button class="secondary" data-host="trae" data-job="${esc(j.id)}">TRAE</button><button class="secondary" data-host="workbuddy" data-job="${esc(j.id)}">WorkBuddy</button>${j.provider==='openai_compatible_text'?`<button class="secondary" data-run="${esc(j.id)}">调用文本接口</button>`:''}</div></div>`).join('')||'<p>暂无跨平台任务</p>';
+ document.querySelectorAll('[data-handoff]').forEach(b=>b.onclick=()=>modelAction('model-handoff',{job_id:b.dataset.handoff}));
+ document.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>modelAction('model-run-text',{job_id:b.dataset.run}));
+ document.querySelectorAll('[data-host]').forEach(b=>b.onclick=()=>modelAction('host-handoff',{job_id:b.dataset.job,host:b.dataset.host}));
+}
+async function modelAction(route,data){try{
+ const out=await request(route,data);$('message').innerHTML='<p class="notice">'+esc(JSON.stringify(out))+'</p>';await refreshModels();await refresh();
+}catch(e){$('message').innerHTML='<p class="notice bad">'+esc(e.message)+'</p>'}}
+$('jobForm').addEventListener('submit',e=>{e.preventDefault();let o=Object.fromEntries(new FormData(e.target));o.source_asset_ids=o.source_asset_ids.split(',').map(x=>x.trim()).filter(Boolean);if(!o.shot_id)delete o.shot_id;modelAction('model-submit',o)});
+$('importForm').addEventListener('submit',e=>{e.preventDefault();modelAction('model-import',Object.fromEntries(new FormData(e.target)))});
+$('profileForm').addEventListener('submit',e=>{e.preventDefault();let o=Object.fromEntries(new FormData(e.target));let body={id:o.id,label:o.label,provider:o.provider,capabilities:[o.capability],enabled:true,model:o.model,endpoint:o.endpoint,api_key_env:o.api_key_env};modelAction('model-config',body)});
+refreshModels();
 </script></body></html>

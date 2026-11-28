@@ -144,3 +144,13 @@ description: 角色数字身份锁定与跨平台自适应 AI 短剧生产工作
 详见 `references/visual-review-pipeline.md`。使用 `scripts/visual_review_pipeline.py audit 项目目录 素材ID --count 7` 对真实视频抽帧，记录时间点、SHA256、视频流信息与审核清单；工作台亦提供同等操作。
 对比角色基准图必须由实际可用的视觉理解工具或人工完成；抽帧成功不得被标记为人物身份审核通过。视频动态动作、口型和声音必须通过真实视频/音频检查。
 发现问题运行 `scripts/visual_review_pipeline.py issue 项目目录 素材ID --category identity --description '具体问题'`，生成带素材哈希的返工任务。高风险未关闭任务阻断成片前和成片后门禁。新素材需新ID、重新审核。
+
+## 独立跨平台生产控制中心（必须执行）
+阅读 `references/cross-platform-production.md` 和根目录 `跨平台运行说明.md`。
+工作台运行 `python scripts/studio_server.py --project ./projects/my-drama`；Windows/Mac/Linux 提供启动脚本。
+每次创作/生成先选当前可用平台的模型配置，核对任务类型和能力；不能确定平台API时，创建任务交接包，待真实结果导入，禁止伪造生成完成。
+每个生成结果必须保存任务ID、平台、模型、提示词、参数、来源素材、实际文件路径和哈希；换平台不重置角色ID、身份参考图、镜头与审核记录。
+审核仍须双门禁：合成前真实素材复核，合成后成片独立复核。工作台记录状态不能替代真实媒体理解工具。
+
+## 四种Agent宿主的专用入口
+阅读 `references/four-agent-hosts.md`。本技能的运行宿主与实际媒体生成模型是不同维度。按豆包 Work、Codex、TRAE、WorkBuddy 的能力与权限选择专用 Skill；在不支持直连时使用 `scripts/platform_handoff.py` 输出对应宿主任务包，不伪造生成结果。所有任务最终回到同一个独立工作台项目，遵循双重复核门禁。
